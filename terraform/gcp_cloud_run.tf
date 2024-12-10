@@ -6,7 +6,7 @@ resource "google_cloud_run_v2_service" "sample" {
   description         = "Sample Cloud Run service"
   location            = local.gcp_network_config.region
   deletion_protection = false
-  ingress             = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+  ingress             = "INGRESS_TRAFFIC_ALL"
 
   template {
     execution_environment            = "EXECUTION_ENVIRONMENT_GEN2"
@@ -24,7 +24,7 @@ resource "google_cloud_run_v2_service" "sample" {
         network    = google_compute_network.vpc.name
         subnetwork = google_compute_subnetwork.subnet["${local.env}-${local.project}-gcp-subnet-ane1"].name
       }
-      egress = "PRIVATE_RANGES_ONLY"
+      egress = "ALL_TRAFFIC"
     }
 
     containers {
