@@ -5,6 +5,15 @@
 # ----------------------
 # Applicaton Load Balancer
 # ----------------------
+
+resource "google_compute_address" "ilb" {
+  for_each     = local.gcp_network_config.proxy_subnet
+  name         = "${local.env}-${local.project}-ilb-static-ip"
+  subnetwork   = google_compute_subnetwork.subnet["${local.env}-${local.project}-gcp-ilb-backend-subnet-ane1"].id
+  address_type = "INTERNAL"
+  region       = local.gcp_network_config.region
+}
+
 // Forwading Rule
 resource "google_compute_forwarding_rule" "ilb" {
   for_each              = local.gcp_network_config.proxy_subnet
@@ -14,6 +23,7 @@ resource "google_compute_forwarding_rule" "ilb" {
   load_balancing_scheme = "INTERNAL_MANAGED"
   port_range            = "80"
   target                = google_compute_region_target_http_proxy.ilb.id
+  ip_address            = google_compute_address.ilb[each.key].address
   network               = google_compute_network.vpc.id
   subnetwork            = google_compute_subnetwork.subnet["${local.env}-${local.project}-gcp-ilb-backend-subnet-ane1"].id
   network_tier          = "PREMIUM"

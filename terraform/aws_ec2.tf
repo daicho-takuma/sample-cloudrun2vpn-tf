@@ -25,6 +25,16 @@ resource "aws_instance" "vms" {
     volume_size = each.value.vol_size
     encrypted   = each.value.vol_encrypted
   }
+
+  user_data = <<EOF
+    #!/bin/bash
+    yum update -y
+    yum install -y httpd
+    systemctl start httpd
+    systemctl enable httpd
+    echo "Hello World from ${each.key}" > /var/www/html/index.html
+  EOF
+
   metadata_options {
     instance_metadata_tags = "enabled"
   }
@@ -101,17 +111,7 @@ resource "aws_security_group_rule" "web_ingress_http_all" {
   from_port         = 80
   to_port           = 80
   protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.web.id
-  description       = "Allow HTTPS from ALL"
-}
-
-resource "aws_security_group_rule" "web_ingress_https_all" {
-  type              = "ingress"
-  from_port         = 443
-  to_port           = 443
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  cidr_blocks       = [local.gcp_network_config.proxy_subnet["${local.env}-${local.project}-gcp-ilb-proxy-subnet-ane1"].cidr]
   security_group_id = aws_security_group.web.id
   description       = "Allow HTTPS from ALL"
 }
@@ -146,13 +146,13 @@ resource "tls_private_key" "ec2-user" {
 }
 
 resource "local_file" "ec2-user" {
-  filename        = "./misc/${local.env}-${local.project}-ec2-user.key"
+  filename        = "../misc/${local.env}-${local.project}-ec2-user.key"
   content         = tls_private_key.ec2-user.private_key_pem
   file_permission = 0600
 }
 
 resource "local_file" "ec2-user-private" {
-  filename        = "./misc/${local.env}-${local.project}-ec2-user.key.pub"
+  filename        = "../misc/${local.env}-${local.project}-ec2-user.key.pub"
   content         = tls_private_key.ec2-user.public_key_openssh
   file_permission = 0600
 }

@@ -51,7 +51,6 @@ locals {
     asn = 65001
   }
 }
-
 locals {
   aws_instance_config = {
     ec2_public = {
